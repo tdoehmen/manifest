@@ -18,9 +18,8 @@ class OpenRouterClient(Client):
     PARAMS = {
         "engine": ("model", "meta-llama/codellama-70b-instruct"),
         "max_tokens": ("max_tokens", 1000),
-        "temperature": ("temperature", 0.5),
+        "temperature": ("temperature", 0.1),
         "top_k": ("k", 0),
-        "top_p": ("p", 0.75),
         "frequency_penalty": ("frequency_penalty", 0.0),
         "presence_penalty": ("presence_penalty", 0.0),
         "stop_sequences": ("stop", None),
