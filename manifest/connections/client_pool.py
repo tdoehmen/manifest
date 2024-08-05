@@ -19,6 +19,7 @@ from manifest.clients.openai import OpenAIClient
 from manifest.clients.openai_chat import OpenAIChatClient
 from manifest.clients.openai_embedding import OpenAIEmbeddingClient
 from manifest.clients.openrouter import OpenRouterClient
+from manifest.clients.azureendpoint import AzureEndpointClient
 from manifest.clients.toma import TOMAClient
 from manifest.connections.scheduler import RandomScheduler, RoundRobinScheduler
 
@@ -39,6 +40,7 @@ CLIENT_CONSTRUCTORS = {
     OpenAIChatClient.NAME: OpenAIChatClient,
     OpenAIEmbeddingClient.NAME: OpenAIEmbeddingClient,
     OpenRouterClient.NAME: OpenRouterClient,
+    AzureEndpointClient.NAME: AzureEndpointClient,
     TOMAClient.NAME: TOMAClient,
 }
 

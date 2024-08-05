@@ -17,7 +17,7 @@ class HuggingFaceClient(Client):
 
     # User param -> (client param, default value)
     PARAMS = {
-        "temperature": ("temperature", 1.0),
+        "temperature": ("temperature", 0.1),
         "max_tokens": ("max_tokens", 10),
         "n": ("n", 1),
         "top_p": ("top_p", 1.0),

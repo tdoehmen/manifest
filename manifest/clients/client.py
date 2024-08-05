@@ -32,13 +32,13 @@ from manifest.response import (
 
 logger = logging.getLogger(__name__)
 
-ATTEMPTS_BEFORE_STOP = 20
-ATTEMPTS_TIMEOUT = 120
+ATTEMPTS_BEFORE_STOP = 4
+ATTEMPTS_TIMEOUT = 30
 # http_status mainly for azure and e.code mainly for openai usage
 # e.http_status == 408 occurs when Azure times out
 # e.code == 429 rate lime
 # e.code == 500 or 502 occurs when server error
-API_ERROR_CODE = {408, 429, 500, 502}
+API_ERROR_CODE = {408, 429, 500, 502, 520, 524}
 
 
 def retry_if_ratelimit(retry_base: RetryCallState) -> bool:
@@ -53,7 +53,7 @@ def retry_if_ratelimit(retry_base: RetryCallState) -> bool:
                 return True
     except Exception:
         pass
-    return False
+    return True
 
 
 def return_error_response(retry_state: RetryCallState) -> dict:
@@ -381,7 +381,6 @@ class Client(ABC):
 
     @retry(
         reraise=True,
-        retry=retry_if_ratelimit,
         wait=wait_random_exponential(min=1, max=ATTEMPTS_TIMEOUT),
         stop=stop_after_attempt(ATTEMPTS_BEFORE_STOP),
     )
@@ -398,6 +397,7 @@ class Client(ABC):
             response as dict.
         """
         request_params = self.preprocess_request_params(request_params)
+        print(request_params)
         post_str = self.get_generation_url()
         res = requests.post(
             post_str,
@@ -407,9 +407,11 @@ class Client(ABC):
         )
         try:
             res.raise_for_status()
-        except requests.exceptions.HTTPError:
-            logger.error(res.json())
-            raise requests.exceptions.HTTPError(res.json())
+        except requests.exceptions.HTTPError as e:
+            logger.warning(
+                str(e)
+            )
+            raise Exception()
         return self.postprocess_response(res.json(), request_params)
 
     @retry(

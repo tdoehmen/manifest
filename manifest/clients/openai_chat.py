@@ -3,6 +3,7 @@ import copy
 import logging
 import os
 from typing import Any, Dict, Optional
+import time
 
 from manifest.clients.openai import OpenAIClient
 from manifest.request import LMRequest
@@ -18,6 +19,11 @@ OPENAICHAT_ENGINES = {
     "gpt-4o-mini",
     "gpt-4-32k",
     "gpt-4-1106-preview",
+    "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
+    "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+    "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+    "ft:gpt-4o-mini-2024-07-18:motherduck:duckdb-nsql-v2-s:9pmS9qHq",
+    "gpt-4o-mini-2024-07-18"
 }
 
 
@@ -61,6 +67,7 @@ class OpenAIChatClient(OpenAIClient):
                 "variable or pass through `client_connection`."
             )
         self.host = "https://api.openai.com/v1"
+        #self.host = "https://api.together.xyz/v1/"
         for key in self.PARAMS:
             setattr(self, key, client_args.pop(key, self.PARAMS[key][1]))
         if getattr(self, "engine") not in OPENAICHAT_ENGINES:
@@ -99,6 +106,9 @@ class OpenAIChatClient(OpenAIClient):
         Returns:
             request params.
         """
+        # sleep to stay within rate limit
+        #time.sleep(2)
+        
         # Format for chat model
         request = copy.deepcopy(request)
         prompt = request.pop("prompt")
@@ -120,7 +130,7 @@ class OpenAIChatClient(OpenAIClient):
                 "Prompt must be string, list of strings, or list of dicts."
                 f"Got {prompt}"
             )
-        request["messages"] = messages
+        request["messages"] = [{"role": "system", "content": "You are a DuckDB SQL generator"}] + messages
         return super().preprocess_request_params(request)
 
     def postprocess_response(self, response: Dict, request: Dict) -> Dict[str, Any]:

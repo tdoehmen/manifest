@@ -7,11 +7,21 @@ from typing import Any, Dict, Optional
 import time 
 from manifest.clients.client import Client
 from manifest.request import LMRequest
+import urllib.request
+import json
+import os
+import ssl
 
 logger = logging.getLogger(__name__)
+def allowSelfSignedHttps(allowed):
+    # bypass the server certificate verification on client side
+    if allowed and not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl, '_create_unverified_context', None):
+        ssl._create_default_https_context = ssl._create_unverified_context
+
+allowSelfSignedHttps(True) # this line is needed if you use self-signed certificate in your scoring service.
 
 
-class OpenRouterClient(Client):
+class AzureEndpointClient(Client):
     """OpenRouter client."""
 
     # Params are defined in https://openrouter.ai/docs/parameters
@@ -25,7 +35,7 @@ class OpenRouterClient(Client):
         "stop_sequences": ("stop", None),
     }
     REQUEST_CLS = LMRequest
-    NAME = "openrouter"
+    NAME = "azureendpoint"
     IS_CHAT = True
 
     def connect(
@@ -42,13 +52,12 @@ class OpenRouterClient(Client):
             connection_str: connection string.
             client_args: client arguments.
         """
-        self.api_key = connection_str or os.environ.get("OPENROUTER_API_KEY")
-        if self.api_key is None:
-            raise ValueError(
-                "OpenRouter API key not set. Set OPENROUTER_API_KEY environment "
-                "variable or pass through `client_connection`."
-            )
-        self.host = "https://openrouter.ai/api/v1"
+
+        self.host = os.environ.get("AZURE_HOST")
+        # Replace this with the primary/secondary key, AMLToken, or Microsoft Entra ID token for the endpoint
+        self.api_key = os.environ.get("AZURE_API_KEY")
+        if not self.api_key:
+            raise Exception("A key should be provided to invoke the endpoint")
         for key in self.PARAMS:
             setattr(self, key, client_args.pop(key, self.PARAMS[key][1]))
 
@@ -62,13 +71,11 @@ class OpenRouterClient(Client):
         Returns:
             header.
         """
-        return {
-            "Authorization": f"Bearer {self.api_key}",
-        }
+        return {'Content-Type':'application/json', 'Authorization':('Bearer '+ self.api_key), 'azureml-model-deployment': 'duckdb-nsql-v2-phi-medium-1' }
 
     def get_generation_url(self) -> str:
         """Get generation URL."""
-        return self.host + "/chat/completions"
+        return self.host + "/score"
 
     def supports_batch_inference(self) -> bool:
         """Return whether the client supports batch inference."""
@@ -91,7 +98,7 @@ class OpenRouterClient(Client):
         Returns:
             model params.
         """
-        return {"model_name": self.NAME, "engine": getattr(self, "engine")}
+        return {"model_name": AzureEndpointClient.NAME, "engine": getattr(self, 'engine')}
 
     def preprocess_request_params(self, request: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -103,30 +110,13 @@ class OpenRouterClient(Client):
         Returns:
             request params.
         """
-        time.sleep(2)
         # Format for chat model
         request = copy.deepcopy(request)
         prompt = request.pop("prompt")
-        if isinstance(prompt, str):
-            messages = [{"role": "user", "content": prompt}]
-        elif isinstance(prompt, list) and isinstance(prompt[0], str):
-            prompt_list = prompt
-            messages = [{"role": "user", "content": prompt} for prompt in prompt_list]
-        elif isinstance(prompt, list) and isinstance(prompt[0], dict):
-            for pmt_dict in prompt:
-                if "role" not in pmt_dict or "content" not in pmt_dict:
-                    raise ValueError(
-                        "Prompt must be list of dicts with 'role' and 'content' "
-                        f"keys. Got {prompt}."
-                    )
-            messages = prompt
-        else:
-            raise ValueError(
-                "Prompt must be string, list of strings, or list of dicts."
-                f"Got {prompt}"
-            )
-        request["messages"] = messages
-        return super().preprocess_request_params(request)
+        data = {"input_data": {"input_string": [{"role": "user", "content": prompt}], "parameters": {"stop":"\n```", "max_tokens": 500}}}
+
+        #body = str(str.encode(json.dumps(data)))
+        return super().preprocess_request_params(data)
 
     def postprocess_response(self, response: Dict, request: Dict) -> Dict[str, Any]:
         """
@@ -141,15 +131,9 @@ class OpenRouterClient(Client):
         """
         new_choices = []
         response = copy.deepcopy(response)
-        if not "choices" in response:
-            new_choices.append({"text": ""})
+        if "output" in response:
+            new_choices.append({"text": response["output"]})
         else:
-            for message in response["choices"]:
-                if "delta" in message:
-                    # This is a streaming response
-                    if "content" in message["delta"]:
-                        new_choices.append({"text": message["delta"]["content"]})
-                else:
-                    new_choices.append({"text": message["message"]["content"]})
+            new_choices.append({"text": ""})
         response["choices"] = new_choices
         return super().postprocess_response(response, request)
