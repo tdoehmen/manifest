@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Type
 from pydantic import BaseModel, Extra
 
 from manifest.clients.ai21 import AI21Client
+from manifest.clients.azureendpoint import AzureEndpointClient
 from manifest.clients.azureopenai import AzureClient
 from manifest.clients.azureopenai_chat import AzureChatClient
 from manifest.clients.client import Client
@@ -15,11 +16,11 @@ from manifest.clients.google import GoogleClient
 from manifest.clients.google_chat import GoogleChatClient
 from manifest.clients.huggingface import HuggingFaceClient
 from manifest.clients.huggingface_embedding import HuggingFaceEmbeddingClient
+from manifest.clients.inference_api import HFInferenceAPIClient
 from manifest.clients.openai import OpenAIClient
 from manifest.clients.openai_chat import OpenAIChatClient
 from manifest.clients.openai_embedding import OpenAIEmbeddingClient
 from manifest.clients.openrouter import OpenRouterClient
-from manifest.clients.azureendpoint import AzureEndpointClient
 from manifest.clients.toma import TOMAClient
 from manifest.connections.scheduler import RandomScheduler, RoundRobinScheduler
 
@@ -41,6 +42,7 @@ CLIENT_CONSTRUCTORS = {
     OpenAIEmbeddingClient.NAME: OpenAIEmbeddingClient,
     OpenRouterClient.NAME: OpenRouterClient,
     AzureEndpointClient.NAME: AzureEndpointClient,
+    HFInferenceAPIClient.NAME: HFInferenceAPIClient,
     TOMAClient.NAME: TOMAClient,
 }
 
