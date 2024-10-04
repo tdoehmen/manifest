@@ -4,7 +4,7 @@ import json
 from typing import Any, Dict, Generator, List, Optional, Type, Union, cast
 
 import numpy as np
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from manifest.request import (
     ENGINE_SEP,

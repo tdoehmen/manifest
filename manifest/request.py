@@ -1,7 +1,7 @@
 """Request object."""
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 # Used when unioning requests after async connection pool
 ENGINE_SEP = "::"

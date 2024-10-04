@@ -3,7 +3,7 @@ import logging
 import time
 from typing import Any, Dict, List, Optional, Type
 
-from pydantic import BaseModel, Extra
+from pydantic.v1 import BaseModel, Extra
 
 from manifest.clients.ai21 import AI21Client
 from manifest.clients.azureendpoint import AzureEndpointClient
