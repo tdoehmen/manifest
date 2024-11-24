@@ -399,12 +399,18 @@ class Client(ABC):
         request_params = self.preprocess_request_params(request_params)
         print(request_params)
         post_str = self.get_generation_url()
-        res = requests.post(
-            post_str,
-            headers=self.get_generation_header(),
-            json=request_params,
-            timeout=retry_timeout,
-        )
+
+        retr = 0
+        res = None
+        while (res is None or res.status_code!=200) and retr < 3:
+            res = requests.post(
+                post_str,
+                headers=self.get_generation_header(),
+                json=request_params,
+                timeout=retry_timeout,
+            )
+            retr += 1
+        
         try:
             res.raise_for_status()
         except requests.exceptions.HTTPError as e:
