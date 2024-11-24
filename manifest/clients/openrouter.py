@@ -103,7 +103,7 @@ class OpenRouterClient(Client):
         Returns:
             request params.
         """
-        time.sleep(2)
+        time.sleep(10)
         # Format for chat model
         request = copy.deepcopy(request)
         prompt = request.pop("prompt")
