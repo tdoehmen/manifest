@@ -411,7 +411,7 @@ class Client(ABC):
                 json=request_params,
                 timeout=retry_timeout,
             )
-            print(res)
+            print(res.json())
             retr += 1
         
         try:
