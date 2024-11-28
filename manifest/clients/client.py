@@ -397,7 +397,9 @@ class Client(ABC):
             response as dict.
         """
         request_params = self.preprocess_request_params(request_params)
-        print(request_params)
+        request_params_print = request_params.copy()
+        del request_params_print['messages']
+        print(request_params_print)
         post_str = self.get_generation_url()
 
         retr = 0
